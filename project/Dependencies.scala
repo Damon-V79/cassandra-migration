@@ -12,8 +12,8 @@ object Dependencies {
     val logbackClassicVersion     = "1.4.8"
     val logbackJsonVersion        = "0.1.5"
     val testcontainersScala       = "0.40.16"
-    val zioLoggingVersion         = "2.1.13"
-    val zioVersion                = "2.0.15"
+    val zioLoggingVersion         = "0.5.14"
+    val zioVersion                = "1.0.18"
   }
 
   import V._

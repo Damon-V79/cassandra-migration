@@ -2,18 +2,16 @@ package org.scalacloud.migration.config
 
 import com.typesafe.config.ConfigFactory
 
-import zio.test.{ Spec, TestEnvironment, ZIOSpecDefault, assertTrue }
-import zio.{ Scope, ZIO }
+import zio.test.{ DefaultRunnableSpec, ZSpec, assertTrue }
 
-object AppConfigSpec extends ZIOSpecDefault {
+object AppConfigSpec extends DefaultRunnableSpec {
 
-  override def spec: Spec[TestEnvironment with Scope, Any] =
+  override def spec: ZSpec[_root_.zio.test.environment.TestEnvironment, Any] =
     suite("AppConfig")(
       test("should correct read config from Typesafe config") {
-        ZIO.attempt {
-          val config = AppConfig.fromConfig(
-            ConfigFactory.parseString(
-              """{
+        val config = AppConfig.fromConfig(
+          ConfigFactory.parseString(
+            """{
                   migration: {
                     cassandra: {
                       hosts = [
@@ -30,32 +28,30 @@ object AppConfigSpec extends ZIOSpecDefault {
                   }
                }
             """
-            )
           )
+        )
 
-          val expected = AppConfig(
-            migrationConfig = MigrationConfig(
-              cassandraHosts = List(
-                CassandraHost("host1", 42),
-                CassandraHost("host2", 43)
-              ),
-              dataCenter = "datacenter1",
-              keyspace = "keyspace",
-              username = "username",
-              password = "password",
-              consistencyLevel = "LOCAL_QUORUM",
-              tablePrefix = "prefix"
-            )
+        val expected = AppConfig(
+          migrationConfig = MigrationConfig(
+            cassandraHosts = List(
+              CassandraHost("host1", 42),
+              CassandraHost("host2", 43)
+            ),
+            dataCenter = "datacenter1",
+            keyspace = "keyspace",
+            username = "username",
+            password = "password",
+            consistencyLevel = "LOCAL_QUORUM",
+            tablePrefix = "prefix"
           )
+        )
 
-          assertTrue(config == expected)
-        }
+        assertTrue(config == expected)
       },
       test("should correct read config from Typesafe config without optional parameters") {
-        ZIO.attempt {
-          val config = AppConfig.fromConfig(
-            ConfigFactory.parseString(
-              """{
+        val config = AppConfig.fromConfig(
+          ConfigFactory.parseString(
+            """{
                   migration: {
                     cassandra: {
                       hosts = [
@@ -71,26 +67,25 @@ object AppConfigSpec extends ZIOSpecDefault {
                   }
                }
             """
-            )
           )
+        )
 
-          val expected = AppConfig(
-            migrationConfig = MigrationConfig(
-              cassandraHosts = List(
-                CassandraHost("host1", 42),
-                CassandraHost("host2", 43)
-              ),
-              dataCenter = "datacenter1",
-              keyspace = "keyspace",
-              username = "username",
-              password = "password",
-              consistencyLevel = "LOCAL_QUORUM",
-              tablePrefix = ""
-            )
+        val expected = AppConfig(
+          migrationConfig = MigrationConfig(
+            cassandraHosts = List(
+              CassandraHost("host1", 42),
+              CassandraHost("host2", 43)
+            ),
+            dataCenter = "datacenter1",
+            keyspace = "keyspace",
+            username = "username",
+            password = "password",
+            consistencyLevel = "LOCAL_QUORUM",
+            tablePrefix = ""
           )
+        )
 
-          assertTrue(config == expected)
-        }
+        assertTrue(config == expected)
       }
     )
 

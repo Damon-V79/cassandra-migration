@@ -5,7 +5,9 @@ import org.scalacloud.migration.Migration
 import org.scalacloud.migration.config.{ CassandraHost, MigrationConfig }
 import org.testcontainers.utility.DockerImageName
 
-import zio.{ ULayer, ZIO, ZLayer }
+import zio.blocking.{ Blocking, effectBlocking }
+import zio.logging.Logger
+import zio.{ Has, ZIO, ZLayer, ZManaged }
 
 object CassandraTestContainer {
 
@@ -15,35 +17,33 @@ object CassandraTestContainer {
     migrationsTablePrefix: String = "",
     dockerImageNameOverride: Option[DockerImageName] = None,
     runMigrations: Boolean = true
-  ): ULayer[CassandraContainer] =
-    ZLayer.scoped {
-      ZIO.acquireRelease {
-        (for {
-          container <- ZIO.attemptBlocking {
-                         val container = new CassandraContainer(
-                           dockerImageNameOverride = dockerImageNameOverride,
-                           initScript = Some("initScript.cql")
-                         )
-                         container.start()
-                         container
-                       }
+  ): ZLayer[Blocking with Has[Logger[String]], Nothing, Has[CassandraContainer]] =
+    ZManaged.make {
+      (for {
+        container <- effectBlocking {
+                       val container = new CassandraContainer(
+                         dockerImageNameOverride = dockerImageNameOverride,
+                         initScript = Some("initScript.cql")
+                       )
+                       container.start()
+                       container
+                     }
 
-          config = MigrationConfig(
-                     List(CassandraHost(container.host, container.mappedPort(9042))),
-                     "datacenter1",
-                     keyspace,
-                     container.username,
-                     container.password,
-                     consistencyLevel,
-                     migrationsTablePrefix
-                   )
+        config = MigrationConfig(
+                   List(CassandraHost(container.host, container.mappedPort(9042))),
+                   "datacenter1",
+                   keyspace,
+                   container.username,
+                   container.password,
+                   consistencyLevel,
+                   migrationsTablePrefix
+                 )
 
-          _ <- if (runMigrations)
-                 Migration.run(config)
-               else
-                 ZIO.succeed(container)
+        _ <- if (runMigrations)
+               Migration.run(config)
+             else
+               ZIO.succeed(container)
 
-        } yield container).orDie
-      }(container => ZIO.attemptBlocking(container.stop()).orDie)
-    }
+      } yield container).orDie
+    }(container => effectBlocking(container.stop()).orDie).toLayer
 }

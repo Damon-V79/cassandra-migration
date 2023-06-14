@@ -8,15 +8,16 @@ import com.dimafeng.testcontainers.CassandraContainer
 import org.scalacloud.migration.container.CassandraTestContainer
 
 import zio.ZIO.service
-import zio._
-import zio.logging.backend.SLF4J
-import zio.test.{ Spec, TestAspect, ZIOSpecDefault, assertTrue }
+import zio.blocking.Blocking
+import zio.duration.durationInt
+import zio.logging.slf4j.Slf4jLogger
+import zio.test.{ DefaultRunnableSpec, TestAspect, ZSpec, assertTrue }
 
-object MigrationSpec extends ZIOSpecDefault {
+object MigrationSpec extends DefaultRunnableSpec {
 
-  override def spec: Spec[Any, Any] =
+  override def spec: ZSpec[_root_.zio.test.environment.TestEnvironment, Any] =
     suite("Cassandra migration")(
-      test("should successful run migrations") {
+      testM("should successful run migrations") {
         for {
           container <- service[CassandraContainer]
           session    = CqlSession.builder
@@ -44,13 +45,13 @@ object MigrationSpec extends ZIOSpecDefault {
           rowTwo    = rsTwo.one
           resultTwo = rowTwo.getInt("value")
         } yield assertTrue(resultOne == "text1") && assertTrue(resultTwo == 42)
-      }.provide(
-        logger >>> CassandraTestContainer.live("test_keyspace", "LOCAL_QUORUM")
+      }.provideCustomLayer(
+        (Blocking.live ++ logger) >>> CassandraTestContainer.live("test_keyspace", "LOCAL_QUORUM")
       )
     ) @@ TestAspect.timeout(120.seconds)
 
   // internal
 
-  private val logger = Runtime.removeDefaultLoggers >>> SLF4J.slf4j
+  private val logger = Slf4jLogger.makeWithAnnotationsAsMdc(List.empty)
 
 }

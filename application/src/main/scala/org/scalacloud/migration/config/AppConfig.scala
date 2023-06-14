@@ -4,7 +4,7 @@ import com.typesafe.config.Config
 import net.ceedubs.ficus.Ficus._
 import net.ceedubs.ficus.readers.ValueReader
 
-import zio.{ URIO, ZIO, ZLayer }
+import zio.{ Has, URIO, ZIO, ZLayer }
 
 case class AppConfig(
   migrationConfig: MigrationConfig
@@ -12,12 +12,12 @@ case class AppConfig(
 
 object AppConfig {
 
-  val live: ZLayer[Config, Nothing, AppConfig] =
-    ZLayer.service[Config].project((config: Config) => fromConfig(config))
+  val live: ZLayer[Has[Config], Nothing, Has[AppConfig]] =
+    ZLayer.fromService((config: Config) => fromConfig(config))
 
   def fromConfig(config: Config): AppConfig = config.as[AppConfig]("migration.cassandra")
 
-  def configs: URIO[AppConfig, AppConfig] = ZIO.service[AppConfig]
+  def configs: URIO[Has[AppConfig], AppConfig] = ZIO.service[AppConfig]
 
   // internal
 

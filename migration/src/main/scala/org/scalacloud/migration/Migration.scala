@@ -6,23 +6,26 @@ import com.datastax.oss.driver.api.core.{ ConsistencyLevel, CqlSession }
 import org.cognitor.cassandra.migration.{ Database, MigrationConfiguration, MigrationRepository, MigrationTask }
 import org.scalacloud.migration.config.MigrationConfig
 
-import zio.{ Cause, Task, ZIO }
+import zio.logging.Logger
+import zio.{ Has, Task, ZIO, ZManaged }
 
 object Migration {
 
-  def run(config: MigrationConfig): ZIO[Any, Throwable, Unit] = {
+  def run(config: MigrationConfig): ZIO[Has[Logger[String]], Throwable, Unit] = {
     val action = for {
-      _       <- ZIO.logInfo("Booting...")
-      _       <- ZIO.logInfo("Connecting...")
+      logger  <- ZIO.service[Logger[String]]
+      _       <- logger.info("Booting...")
+      _       <- logger.info("Connecting...")
       session <- connect(config)
-      _       <- ZIO.logInfo("Starting migration...")
+      _       <- logger.info("Starting migration...")
       _       <- runMigration(session, config)
-      _       <- ZIO.logInfo("Migration completed")
+      _       <- logger.info("Migration completed")
     } yield ()
 
-    action.tapError { t =>
+    action.tapError { _ =>
       for {
-        _ <- ZIO.logErrorCause("Migration failed with error", Cause.fail(t))
+        logger <- ZIO.service[Logger[String]]
+        _      <- logger.error("Migration failed with error")
       } yield ()
     }
 
@@ -31,7 +34,7 @@ object Migration {
   // internal
 
   private def connect(config: MigrationConfig): Task[CqlSession] =
-    ZIO.attempt {
+    Task {
       val builder = CqlSession.builder()
 
       config.cassandraHosts
@@ -43,16 +46,16 @@ object Migration {
         .build()
     }
 
-  private def runMigration(session: CqlSession, config: MigrationConfig): Task[Unit] =
-    ZIO.scoped {
-      val configuration =
-        new MigrationConfiguration().withKeyspaceName(config.keyspace).withTablePrefix(config.tablePrefix)
-      ZIO.fromAutoCloseable(ZIO.attempt(new Database(session, configuration))).flatMap { database =>
-        database.setConsistencyLevel(getConsistencyLevel(config.consistencyLevel))
-        val migration = new MigrationTask(database, new MigrationRepository())
-        ZIO.attempt(migration.migrate())
-      }
+  def runMigration(session: CqlSession, config: MigrationConfig): Task[Unit] = {
+    val configuration =
+      new MigrationConfiguration().withKeyspaceName(config.keyspace).withTablePrefix(config.tablePrefix)
+
+    ZManaged.fromAutoCloseable(Task(new Database(session, configuration))).use { database =>
+      database.setConsistencyLevel(getConsistencyLevel(config.consistencyLevel))
+      val migration = new MigrationTask(database, new MigrationRepository())
+      Task(migration.migrate())
     }
+  }
 
   private def getConsistencyLevel(str: String): ConsistencyLevel =
     str.capitalize match {

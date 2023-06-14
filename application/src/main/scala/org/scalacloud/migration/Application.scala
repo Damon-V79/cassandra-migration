@@ -3,26 +3,31 @@ package org.scalacloud.migration
 import com.typesafe.config.ConfigFactory
 import org.scalacloud.migration.config.AppConfig
 
-import zio.logging.backend.SLF4J
-import zio.{ ZIOAppDefault, ZLayer, _ }
+import zio.logging.Logger
+import zio.logging.slf4j.Slf4jLogger
+import zio.{ App => ZIOApp, ZLayer, _ }
 
-object Application extends ZIOAppDefault {
+object Application extends ZIOApp {
 
-  override val bootstrap: ZLayer[ZIOAppArgs, Any, Any] = Runtime.removeDefaultLoggers >>> SLF4J.slf4j
-
-  override def run: ZIO[Any, Any, Any] = {
+  override def run(args: List[String]) = {
     val action = for {
+      logger <- ZIO.service[Logger[String]]
       config <- ZIO.service[AppConfig]
-      _      <- ZIO.logInfo("Run Cassandra migration")
+      _      <- logger.info("Run Cassandra migration")
       _      <- Migration.run(config.migrationConfig)
     } yield ()
 
     action
-      .provide(
-        AppConfig.live,
-        ZLayer.succeed(ConfigFactory.load())
+      .provideLayer(
+        configLayer ++ loggingLayer
       )
       .exitCode
+
   }
 
+  // internal
+
+  private val configLayer = ZLayer.succeed(ConfigFactory.load()) >>> AppConfig.live
+
+  private val loggingLayer = Slf4jLogger.makeWithAnnotationsAsMdc(List.empty)
 }
