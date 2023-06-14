@@ -24,7 +24,7 @@ object MigrationSpec extends ZIOSpecDefault {
                            new DefaultEndPoint(
                              InetSocketAddress
                                .createUnresolved(
-                                 container.cassandraContainer.getContainerIpAddress,
+                                 container.cassandraContainer.getHost(),
                                  container.cassandraContainer.getFirstMappedPort.intValue()
                                )
                            )

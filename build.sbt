@@ -2,16 +2,23 @@ ThisBuild / semanticdbEnabled := true
 ThisBuild / semanticdbVersion := scalafixSemanticdb.revision
 ThisBuild / scalafixDependencies += "com.github.liancheng" %% "organize-imports" % "0.6.0"
 
+ThisBuild / sonatypeCredentialHost := "s01.oss.sonatype.org"
+
 lazy val scala212 = "2.12.18"
 lazy val scala213 = "2.13.10"
 lazy val scala3   = "3.3.0"
 lazy val supportedScalaVersions = List(scala212, scala213, scala3)
 
 val commonSettings = Seq(
-  version := "1.0.0",
+  version := "0.0.1",
   scalaVersion := scala213,
   crossScalaVersions := supportedScalaVersions,
   organization := "org.scalacloud",
+  homepage := Some(url("https://scalacloud.org/cassandra-migration")),
+  scmInfo := Some(ScmInfo(url("https://github.com/Damon-V79/cassandra-migration"), "https://github.com/Damon-V79/cassandra-migration.git")),
+  developers := List(Developer("DamonV79", "Dmitry Voevodin", "damon@damonblog.com", url("https://damonblog.com"))),
+  licenses := Seq("MIT" -> url("https://opensource.org/license/mit/")),
+  publishMavenStyle := true,
   testFrameworks ++= Seq(new TestFramework("zio.test.sbt.ZTestFramework")),
   scalacOptions ++= {
     CrossVersion.partialVersion(scalaVersion.value) match {
@@ -20,7 +27,12 @@ val commonSettings = Seq(
       case _             => Nil
     }
   },
-  Test / parallelExecution := false
+  Test / parallelExecution := false,
+  publishTo := {
+    val nexus = "https://s01.oss.sonatype.org/"
+    if (isSnapshot.value) Some("snapshots" at nexus + "content/repositories/snapshots")
+    else Some("releases" at nexus + "service/local/staging/deploy/maven2")
+  }
 )
 
 lazy val itSettings = Defaults.itSettings ++ scalafixConfigSettings(IntegrationTest)

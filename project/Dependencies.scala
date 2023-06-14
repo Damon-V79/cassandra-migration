@@ -4,14 +4,14 @@ object Dependencies {
 
   object V {
     val cassandraMigrationVersion = "2.6.0_v4"
-    val configVersion             = "1.4.1"
-    val datastaxJavaDriver        = "4.14.0"
+    val configVersion             = "1.4.2"
+    val datastaxJavaDriver        = "4.16.0"
     val diffxCoreVersion          = "0.7.0"
     val ficusVersion              = "1.5.2"
-    val jacksonDatabindVersion    = "2.13.0"
-    val logbackClassicVersion     = "1.2.6"
+    val jacksonDatabindVersion    = "2.15.0"
+    val logbackClassicVersion     = "1.4.8"
     val logbackJsonVersion        = "0.1.5"
-    val testcontainersScala       = "0.40.5"
+    val testcontainersScala       = "0.40.16"
     val zioLoggingVersion         = "2.1.13"
     val zioVersion                = "2.0.15"
   }
