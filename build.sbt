@@ -19,7 +19,7 @@ releaseProcess := Seq[ReleaseStep](
   setNextVersion,                        // set next version in version.sbt
   commitNextVersion,                     // commint next version
   //releaseStepCommand("sonatypeRelease"), // run sonatypeRelease and publish to maven central
-  //pushChanges                            // push changes to git
+  pushChanges                            // push changes to git
 )
 
 lazy val scala212 = "2.12.18"
