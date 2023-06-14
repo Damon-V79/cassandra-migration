@@ -93,6 +93,7 @@ lazy val root = (project in file("."))
   .aggregate(application, migration, testcontainers)
   .settings(
     name := "cassandra-migration-root",
+    crossScalaVersions := Nil,
     publish / skip := true
   )
 
