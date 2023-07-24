@@ -41,7 +41,7 @@ val commonSettings = Seq(
     CrossVersion.partialVersion(scalaVersion.value) match {
       case Some((2, 12)) => scalacOptions212
       case Some((2, 13)) => scalacOptions213
-      case _             => Nil
+      case _             => scalacOptions3
     }
   },
   Test / parallelExecution := false,
@@ -96,6 +96,10 @@ lazy val root = (project in file("."))
     crossScalaVersions := Nil,
     publish / skip := true
   )
+
+lazy val scalacOptions3 = Seq(
+  "-release", "8"                                // Build for Java8+
+)
 
 // based on https://gist.github.com/tabdulradi/aa7450921756cd22db6d278100b2dac8
 lazy val scalacOptions213 = Seq(
@@ -154,7 +158,8 @@ lazy val scalacOptions213 = Seq(
 
   "-Ybackend-parallelism", "8",                 // Enable paralellisation — change to desired number!
   "-Ycache-plugin-class-loader:last-modified",  // Enables caching of classloaders for compiler plugins
-  "-Ycache-macro-class-loader:last-modified"    // and macro definitions. This can lead to performance improvements.
+  "-Ycache-macro-class-loader:last-modified",    // and macro definitions. This can lead to performance improvements.
+  "-release", "8"                                // Build for Java8+
 )
 
 // based on https://tpolecat.github.io/2017/04/25/scalac-flags.html
@@ -203,6 +208,7 @@ lazy val scalacOptions212 = Seq(
   "-Ywarn-unused:params",              // Warn if a value parameter is unused.
   "-Ywarn-unused:patvars",             // Warn if a variable bound in a pattern is unused.
   "-Ywarn-unused:privates",            // Warn if a private member is unused.
-  "-Ywarn-value-discard"               // Warn when non-Unit expression results are unused.
+  "-Ywarn-value-discard",              // Warn when non-Unit expression results are unused.
+  "-target:jvm-1.8"                    // Build for Java8+
 )
 
