@@ -1,4 +1,4 @@
-package com.scalacloud.migration
+package org.scalacloud.migration
 
 import java.net.InetSocketAddress
 
@@ -24,7 +24,7 @@ object MigrationSpec extends ZIOSpecDefault {
                            new DefaultEndPoint(
                              InetSocketAddress
                                .createUnresolved(
-                                 container.cassandraContainer.getHost(),
+                                 container.cassandraContainer.getHost,
                                  container.cassandraContainer.getFirstMappedPort.intValue()
                                )
                            )
@@ -45,7 +45,11 @@ object MigrationSpec extends ZIOSpecDefault {
           resultTwo = rowTwo.getInt("value")
         } yield assertTrue(resultOne == "text1") && assertTrue(resultTwo == 42)
       }.provide(
-        logger >>> CassandraTestContainer.live("test_keyspace", "LOCAL_QUORUM")
+        logger >>> CassandraTestContainer.live(
+          keyspace = "test_keyspace",
+          consistencyLevel = "LOCAL_QUORUM",
+          initScript = Some("initScript.cql")
+        )
       )
     ) @@ TestAspect.timeout(120.seconds)
 

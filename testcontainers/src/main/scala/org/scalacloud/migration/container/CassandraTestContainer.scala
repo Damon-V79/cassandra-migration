@@ -12,6 +12,7 @@ object CassandraTestContainer {
   def live(
     keyspace: String,
     consistencyLevel: String,
+    initScript: Option[String] = None,
     migrationsTablePrefix: String = "",
     dockerImageNameOverride: Option[DockerImageName] = None,
     runMigrations: Boolean = true
@@ -22,7 +23,7 @@ object CassandraTestContainer {
           container <- ZIO.attemptBlocking {
                          val container = new CassandraContainer(
                            dockerImageNameOverride = dockerImageNameOverride,
-                           initScript = Some("initScript.cql")
+                           initScript = initScript
                          )
                          container.start()
                          container
